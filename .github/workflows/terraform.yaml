@@ -1,0 +1,33 @@
+name: Terraform Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      terraform_code:
+        description: "Terraform code from chatbot"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Write Terraform Code
+        run: echo "${{ github.event.inputs.terraform_code }}" > main.tf
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Validate Terraform Code
+        run: terraform validate
+
+      - name: Apply Terraform Code
+        run: terraform apply -auto-approve
