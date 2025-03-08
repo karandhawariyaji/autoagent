@@ -3,8 +3,8 @@ name: Terraform Deployment
 on:
   workflow_dispatch:
     inputs:
-      terraform_code:
-        description: "Terraform code from chatbot"
+      tf_file:
+        description: "Content of main.tf file"
         required: true
 
 jobs:
@@ -17,17 +17,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Set Up Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Create main.tf from input
+        run: echo "${{ github.event.inputs.tf_file }}" > main.tf
 
-      - name: Write Terraform Code
-        run: echo "${{ github.event.inputs.terraform_code }}" > main.tf
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
 
       - name: Initialize Terraform
         run: terraform init
 
       - name: Validate Terraform Code
-        run: terraform plan
+        run: terraform validate
 
-      - name: Apply Terraform Code
+      - name: Apply Terraform Configuration
         run: terraform apply -auto-approve
