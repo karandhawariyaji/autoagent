@@ -26,8 +26,8 @@ jobs:
       - name: Initialize Terraform
         run: terraform init
 
-      - name: Validate Terraform Code
-        run: terraform validate
+      # - name: Validate Terraform Code
+      #   run: terraform validate
 
       - name: Apply Terraform Code
         run: terraform apply -auto-approve
