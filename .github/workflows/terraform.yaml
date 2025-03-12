@@ -3,6 +3,22 @@ name: Terraform Deployment
 on:
   workflow_dispatch:
     inputs:
+      project_id:
+        description: 'The project ID'
+        required: true
+        type: string
+      user_id:
+        description: 'The user ID'
+        required: true
+        type: string
+      resource_type:
+        description: 'The Resource Type '
+        required: true
+        type: string
+      resource_name:
+        description: 'The Resource Name'
+        required: true
+        type: string
       terraform_code:
         description: 'Terraform code to run'
         required: true
