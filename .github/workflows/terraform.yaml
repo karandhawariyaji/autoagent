@@ -44,8 +44,15 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
+      - name: Create backend-config.hcl
+        run: |
+          cat <<EOF > backend-config.hcl
+          bucket = "agentic-452816"
+          prefix = "agentic/${{ github.event.inputs.user_id }}/${{ github.event.inputs.project_id }}/${{ github.event.inputs.resource_type }}/${{ github.event.inputs.resource_name }}"
+          EOF
+
       - name: Initialize Terraform
-        run: terraform init -backend=true
+        run: terraform init -backend-config=backend-config.hcl
 
       - name: Validate Terraform Code
         run: terraform validate
