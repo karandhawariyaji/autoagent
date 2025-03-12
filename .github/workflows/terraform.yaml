@@ -3,8 +3,8 @@ name: Terraform Deployment
 on:
   workflow_dispatch:
     inputs:
-      tf_file:
-        description: "Content of main.tf file"
+      terraform_code:
+        description: 'Terraform code to run'
         required: true
 
 jobs:
@@ -17,17 +17,83 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Create main.tf from input
-        run: echo "${{ github.event.inputs.tf_file }}" > main.tf
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Create Python Script to Generate main.tf
+        run: |
+          cat <<EOF > generate_tf.py
+          import os
+          terraform_code = os.getenv('TERRAFORM_CODE', '')
+          if not terraform_code:
+              raise ValueError("Error: Terraform code is missing!")
+          with open('main.tf', 'w') as f:
+              f.write(terraform_code)
+          EOF
+
+      - name: Run Python Script to Generate main.tf
+        env:
+          TERRAFORM_CODE: "${{ github.event.inputs.terraform_code }}"
+        run: python generate_tf.py
+
+      - name: Display Generated main.tf
+        run: cat main.tf
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
       - name: Initialize Terraform
-        run: terraform init
+        run: terraform init -backend=true
 
       - name: Validate Terraform Code
         run: terraform validate
 
+      - name: Format Terraform Code
+        run: terraform fmt -check
+
+      - name: Plan Terraform Configuration
+        run: terraform plan -out=tfplan
+
       - name: Apply Terraform Configuration
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
+
+
+
+
+
+
+# name: Terraform Deployment
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       tf_file:
+#         description: "Content of main.tf file"
+#         required: true
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     env:
+#       GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v3
+
+#       - name: Create main.tf from input
+#         run: echo "${{ github.event.inputs.tf_file }}" > main.tf
+
+#       - name: Set up Terraform
+#         uses: hashicorp/setup-terraform@v2
+
+#       - name: Initialize Terraform
+#         run: terraform init
+
+#       - name: Validate Terraform Code
+#         run: terraform validate
+
+#       - name: Apply Terraform Configuration
+#         run: terraform apply -auto-approve
