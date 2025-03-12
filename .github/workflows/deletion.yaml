@@ -1,0 +1,112 @@
+name: Terraform Deletion
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: 'The project ID'
+        required: true
+        type: string
+      user_id:
+        description: 'The user ID'
+        required: true
+        type: string
+      resource_type:
+        description: 'The Resource Type '
+        required: true
+        type: string
+      resource_name:
+        description: 'The Resource Name'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # - name: Set up Python
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: '3.x'
+
+      # - name: Create Python Script to Generate main.tf
+      #   run: |
+      #     cat <<EOF > generate_tf.py
+      #     import os
+      #     terraform_code = os.getenv('TERRAFORM_CODE', '')
+      #     if not terraform_code:
+      #         raise ValueError("Error: Terraform code is missing!")
+      #     with open('main.tf', 'w') as f:
+      #         f.write(terraform_code)
+      #     EOF
+
+      # - name: Run Python Script to Generate main.tf
+      #   env:
+      #     TERRAFORM_CODE: "${{ github.event.inputs.terraform_code }}"
+      #   run: python generate_tf.py
+
+      # - name: Display Generated main.tf
+      #   run: cat main.tf
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Create backend-config.hcl
+        run: |
+          cat <<EOF > backend-config.hcl
+          bucket = "agentic-452816"
+          prefix = "agentic/${{ github.event.inputs.user_id }}/${{ github.event.inputs.project_id }}/${{ github.event.inputs.resource_type }}/${{ github.event.inputs.resource_name }}"
+          EOF
+
+      - name: Initialize Terraform
+        run: terraform init -backend-config=backend-config.hcl
+
+      - name: Validate Terraform Code
+        run: terraform validate
+
+      - name: Plan Terraform Configuration
+        run: terraform plan -out=tfplan
+
+      - name: Apply Terraform Configuration
+        run: terraform destroy -auto-approve tfplan
+
+
+# name: Terraform Deployment
+
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       terraform_code:
+#         description: 'Terraform code to run'
+#         required: true
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     env:
+#       GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+#     steps:
+#       - name: Checkout Repository
+#         uses: actions/checkout@v3
+
+#       - name: Create main.tf from input
+#         run: printf "%s" "${{ github.event.inputs.terraform_code }}" > main.tf
+
+#       - name: Set up Terraform
+#         uses: hashicorp/setup-terraform@v2
+
+#       - name: Initialize Terraform
+#         run: terraform init
+
+#       - name: Validate Terraform Code
+#         run: terraform validate
+
+#       - name: Apply Terraform Configuration
+#         run: terraform apply -auto-approve
