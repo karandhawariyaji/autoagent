@@ -12,7 +12,7 @@ on:
         required: true
         type: string
       resource_type:
-        description: 'The Resource Type '
+        description: 'The Resource Type'
         required: true
         type: string
       resource_name:
@@ -38,24 +38,34 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Create Python Script to Generate main.tf
+      - name: Create Python Script to Generate Dynamic Terraform File
         run: |
           cat <<EOF > generate_tf.py
           import os
+
           terraform_code = os.getenv('TERRAFORM_CODE', '')
+          resource_name = os.getenv('RESOURCE_NAME', '')
+
           if not terraform_code:
               raise ValueError("Error: Terraform code is missing!")
-          with open('main.tf', 'w') as f:
+          if not resource_name:
+              raise ValueError("Error: Resource name is missing!")
+
+          filename = f"{resource_name}.tf"
+          with open(filename, 'w') as f:
               f.write(terraform_code)
+          
+          print(f"Terraform file '{filename}' created successfully.")
           EOF
 
-      - name: Run Python Script to Generate main.tf
+      - name: Run Python Script to Generate Dynamic Terraform File
         env:
           TERRAFORM_CODE: "${{ github.event.inputs.terraform_code }}"
+          RESOURCE_NAME: "${{ github.event.inputs.resource_name }}"
         run: python generate_tf.py
 
-      - name: Display Generated main.tf
-        run: cat main.tf
+      - name: Display Generated Terraform File
+        run: cat "${{ github.event.inputs.resource_name }}.tf"
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
@@ -73,9 +83,6 @@ jobs:
       - name: Validate Terraform Code
         run: terraform validate
 
-      # - name: Format Terraform Code
-      #   run: terraform fmt -check
-
       - name: Plan Terraform Configuration
         run: terraform plan -out=tfplan
 
@@ -83,18 +90,71 @@ jobs:
         run: terraform apply -auto-approve tfplan
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # name: Terraform Deployment
 
 # on:
 #   workflow_dispatch:
 #     inputs:
+#       project_id:
+#         description: 'The project ID'
+#         required: true
+#         type: string
+#       user_id:
+#         description: 'The user ID'
+#         required: true
+#         type: string
+#       resource_type:
+#         description: 'The Resource Type '
+#         required: true
+#         type: string
+#       resource_name:
+#         description: 'The Resource Name'
+#         required: true
+#         type: string
 #       terraform_code:
 #         description: 'Terraform code to run'
 #         required: true
 
 # jobs:
 #   deploy:
-#     runs-on: ubuntu-latest
+#     runs-on: agent
 #     env:
 #       GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
 
@@ -102,17 +162,86 @@ jobs:
 #       - name: Checkout Repository
 #         uses: actions/checkout@v3
 
-#       - name: Create main.tf from input
-#         run: printf "%s" "${{ github.event.inputs.terraform_code }}" > main.tf
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: '3.x'
+
+#       - name: Create Python Script to Generate main.tf
+#         run: |
+#           cat <<EOF > generate_tf.py
+#           import os
+#           terraform_code = os.getenv('TERRAFORM_CODE', '')
+#           if not terraform_code:
+#               raise ValueError("Error: Terraform code is missing!")
+#           with open('main.tf', 'w') as f:
+#               f.write(terraform_code)
+#           EOF
+
+#       - name: Run Python Script to Generate main.tf
+#         env:
+#           TERRAFORM_CODE: "${{ github.event.inputs.terraform_code }}"
+#         run: python generate_tf.py
+
+#       - name: Display Generated main.tf
+#         run: cat main.tf
 
 #       - name: Set up Terraform
 #         uses: hashicorp/setup-terraform@v2
 
+#       - name: Create backend-config.hcl
+#         run: |
+#           cat <<EOF > backend-config.hcl
+#           bucket = "agentic-452816"
+#           prefix = "agentic/${{ github.event.inputs.user_id }}/${{ github.event.inputs.project_id }}/${{ github.event.inputs.resource_type }}/${{ github.event.inputs.resource_name }}"
+#           EOF
+
 #       - name: Initialize Terraform
-#         run: terraform init
+#         run: terraform init -backend-config=backend-config.hcl
 
 #       - name: Validate Terraform Code
 #         run: terraform validate
 
+#       # - name: Format Terraform Code
+#       #   run: terraform fmt -check
+
+#       - name: Plan Terraform Configuration
+#         run: terraform plan -out=tfplan
+
 #       - name: Apply Terraform Configuration
-#         run: terraform apply -auto-approve
+#         run: terraform apply -auto-approve tfplan
+
+
+# # name: Terraform Deployment
+
+# # on:
+# #   workflow_dispatch:
+# #     inputs:
+# #       terraform_code:
+# #         description: 'Terraform code to run'
+# #         required: true
+
+# # jobs:
+# #   deploy:
+# #     runs-on: ubuntu-latest
+# #     env:
+# #       GOOGLE_CREDENTIALS: ${{ secrets.SA_KEY }}
+
+# #     steps:
+# #       - name: Checkout Repository
+# #         uses: actions/checkout@v3
+
+# #       - name: Create main.tf from input
+# #         run: printf "%s" "${{ github.event.inputs.terraform_code }}" > main.tf
+
+# #       - name: Set up Terraform
+# #         uses: hashicorp/setup-terraform@v2
+
+# #       - name: Initialize Terraform
+# #         run: terraform init
+
+# #       - name: Validate Terraform Code
+# #         run: terraform validate
+
+# #       - name: Apply Terraform Configuration
+# #         run: terraform apply -auto-approve
