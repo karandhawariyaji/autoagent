@@ -58,11 +58,12 @@ jobs:
           print(f"Terraform file '{filename}' created successfully.")
           EOF
 
-      - name: Run Python Script to Generate Dynamic Terraform File
+      - name: Run Python Script to Generate Terraform File
         env:
           TERRAFORM_CODE: "${{ github.event.inputs.terraform_code }}"
           RESOURCE_NAME: "${{ github.event.inputs.resource_name }}"
-        run: python generate_tf.py
+        run: python3 generate_tf.py
+
 
       - name: Display Generated Terraform File
         run: cat "${{ github.event.inputs.resource_name }}.tf"
